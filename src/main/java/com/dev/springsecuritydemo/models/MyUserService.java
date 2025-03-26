@@ -23,13 +23,7 @@ public class MyUserService implements UserDetailsService {
         MyUser user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("username not found"));
 
-        return MyUser.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .password(user.getPassword())
-                .role(user.getRole())
-                .age(user.getAge())
-                .build();
+        return new MyUser(user.getId(), user.getUsername(), user.getPassword(), user.getRole(), user.getAge());
 
     }
 
