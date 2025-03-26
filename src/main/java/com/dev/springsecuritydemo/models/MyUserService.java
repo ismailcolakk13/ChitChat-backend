@@ -21,7 +21,7 @@ public class MyUserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         MyUser user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("username not found"));
+                .orElseThrow(() -> new UsernameNotFoundException(username +" not found: (Spring)"));
 
         return new MyUser(user.getId(), user.getUsername(), user.getPassword(), user.getRole(), user.getAge());
 
@@ -29,7 +29,7 @@ public class MyUserService implements UserDetailsService {
 
     public void createUser(String username, String password, String role, int age) {
         if (userRepository.findByUsername(username).isPresent()) {
-            throw new UsernameNotFoundException("username already exists");
+            throw new UsernameNotFoundException(username +" already exists: (Spring)");
         }
         MyUser newUser = MyUser.builder()
                 .username(username)

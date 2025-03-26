@@ -48,13 +48,13 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody MyUser user) {
         myUserService.createUser(user.getUsername(),user.getPassword(),user.getRole(),user.getAge());
-        return ResponseEntity.ok("user created(spring)");
+        return ResponseEntity.ok("User created: (Spring)");
     }
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request) {
         SecurityContextHolder.clearContext();
         request.getSession().invalidate();
-        return ResponseEntity.ok("Logged out successfully");
+        return ResponseEntity.ok("Logged out: (Spring)");
     }
 }

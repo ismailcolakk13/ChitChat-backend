@@ -39,7 +39,7 @@ public class WebSecurityConfig {
                         .logoutUrl("/api/logout")
                         .logoutSuccessHandler((request, response, authentication) -> {
                             response.setStatus(200);
-                            response.getWriter().write("Logout successful");
+                            response.getWriter().write("Logout successful: (Spring)");
                             response.getWriter().flush();
                         })
                         .invalidateHttpSession(true)
