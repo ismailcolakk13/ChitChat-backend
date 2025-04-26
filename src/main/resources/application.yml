@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: springSecurityDemo
+  config:
+    import: "classpath:env.properties"
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+jwt:
+  secret: ${JWT_SECRET}
+
+url:
+  frontend-1: ${FRONTEND_URL_1}
+  frontend-2: ${FRONTEND_URL_2}
+  test: ${TEST_URL}
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
