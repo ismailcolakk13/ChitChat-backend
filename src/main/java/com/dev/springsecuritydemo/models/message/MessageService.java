@@ -14,7 +14,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -103,29 +102,5 @@ public class MessageService {
             throw new AccessDeniedException("You can't delete this message");
         }
         messageRepository.delete(message);
-    }
-
-    public void readMessage(Long messageId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
-
-        MyUser receiver = myUserRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-        Integer receiverId = receiver.getId();
-        Message message = messageRepository.findById(messageId).orElseThrow();
-        Integer senderId = message.getSenderId();
-        if (senderId.equals(receiverId)) {
-            return;
-        }
-        message.setIsRead(true);
-        messageRepository.save(message);
-    }
-
-    public void readMessagesInRoom(Integer roomId) {
-        ChatRoom chatRoom = chatRoomService.getChatRoomById(roomId);
-        List<Message> messages = chatRoom.getMessages();
-        for(Message message : messages){
-            if(!message.getIsRead())
-                readMessage(message.getMessageId());
-        }
     }
 }

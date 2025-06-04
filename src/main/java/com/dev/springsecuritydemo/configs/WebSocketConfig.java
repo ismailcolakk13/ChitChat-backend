@@ -54,29 +54,38 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                StompHeaderAccessor accessor =
-                        MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+                StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-
-                assert accessor != null;
-                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-
+                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String authorizationHeader = accessor.getFirstNativeHeader("Authorization");
-                    assert authorizationHeader != null;
-                    String token = authorizationHeader.substring(7);
 
-                    System.out.println("Token: " + token);
-                    String username = jwtService.extractUsername(token);
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-
-                    accessor.setUser(usernamePasswordAuthenticationToken);
+                    if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                        try {
+                            String token = authorizationHeader.substring(7);
+                            String username = jwtService.extractUsername(token);
+                            if (username != null) {
+                                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                                if (jwtService.isTokenValid(token, userDetails)) {
+                                    UsernamePasswordAuthenticationToken authenticationToken =
+                                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                                    accessor.setUser(authenticationToken);
+                                } else {
+                                    // Token invalid - could throw an exception or reject connection here
+                                    System.out.println("JWT token is invalid");
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.out.println("Exception during JWT processing: " + e.getMessage());
+                            // Optionally close connection or ignore auth
+                        }
+                    } else {
+                        System.out.println("No valid Authorization header found for WebSocket connection");
+                    }
                 }
-
                 return message;
             }
-
         });
     }
+
 }

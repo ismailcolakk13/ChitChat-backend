@@ -38,7 +38,6 @@ public class ChatController {
 
     @GetMapping("/room/{roomId}")
     public ResponseEntity<List<MessageDTO>> getRoomMessages(@PathVariable Integer roomId) throws AccessDeniedException {
-        messageService.readMessagesInRoom(roomId);
         List<Message> messages = chatRoomService.getMessagesByChatRoom(roomId);
         List<MessageDTO> messagesDTO= MessageMapper.toDTOList(messages);
         return ResponseEntity.ok(messagesDTO);
@@ -58,11 +57,5 @@ public class ChatController {
         return ResponseEntity.ok("Message deleted successfully");
     }
 
-    //MessageCONTROLLER
-    @PutMapping("/read/{messageId}")
-    public ResponseEntity<String> readMessage(@PathVariable Long messageId) {
-        messageService.readMessage(messageId);
-        return ResponseEntity.ok("Message read successfully");
-    }
 
 }
