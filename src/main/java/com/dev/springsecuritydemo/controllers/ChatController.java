@@ -1,12 +1,12 @@
 package com.dev.springsecuritydemo.controllers;
 
-import com.dev.springsecuritydemo.models.chatRoom.ChatRoomMapper;
-import com.dev.springsecuritydemo.models.message.MessageMapper;
 import com.dev.springsecuritydemo.models.chatRoom.ChatRoom;
 import com.dev.springsecuritydemo.models.chatRoom.ChatRoomDTO;
+import com.dev.springsecuritydemo.models.chatRoom.ChatRoomMapper;
+import com.dev.springsecuritydemo.models.chatRoom.ChatRoomService;
 import com.dev.springsecuritydemo.models.message.Message;
 import com.dev.springsecuritydemo.models.message.MessageDTO;
-import com.dev.springsecuritydemo.models.chatRoom.ChatRoomService;
+import com.dev.springsecuritydemo.models.message.MessageMapper;
 import com.dev.springsecuritydemo.models.message.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,9 +25,9 @@ public class ChatController {
 
     //MessageCONTROLLER
     @PostMapping("/send")
-    public ResponseEntity<String> sendMessage(@RequestBody MessageDTO messageDto) {
-        messageService.sendMessage(messageDto.receiverId(),messageDto.text());
-        return ResponseEntity.ok("Message sent");
+    public ResponseEntity<ChatRoomDTO> sendMessage(@RequestBody MessageDTO messageDto) {
+        ChatRoomDTO res = messageService.sendMessage(messageDto.receiverId(),messageDto.text());
+        return ResponseEntity.ok(res);
     }
 
     @GetMapping("/rooms")
@@ -38,6 +38,7 @@ public class ChatController {
 
     @GetMapping("/room/{roomId}")
     public ResponseEntity<List<MessageDTO>> getRoomMessages(@PathVariable Integer roomId) throws AccessDeniedException {
+        messageService.readMessagesInRoom(roomId);
         List<Message> messages = chatRoomService.getMessagesByChatRoom(roomId);
         List<MessageDTO> messagesDTO= MessageMapper.toDTOList(messages);
         return ResponseEntity.ok(messagesDTO);

@@ -1,6 +1,7 @@
 package com.dev.springsecuritydemo.models.auth;
 
 import com.dev.springsecuritydemo.models.myUser.MyUser;
+import com.dev.springsecuritydemo.models.myUser.MyUserMapper;
 import com.dev.springsecuritydemo.models.myUser.MyUserRepository;
 import com.dev.springsecuritydemo.configs.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,10 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public AuthenticationResponse register(RegisterRequest request) {
+        if (repository.findByUsername(request.getUsername()).isPresent()) {
+            throw new RuntimeException("Username is already taken");
+        }
+
         var user = MyUser.builder()
                 .username(request.getUsername())
                 .age(request.getAge())
@@ -27,7 +32,9 @@ public class AuthenticationService {
                 .build();
 
         repository.save(user);
+
         var jwtToken = jwtService.generateToken(user);
+
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();
@@ -40,9 +47,13 @@ public class AuthenticationService {
                         request.getPassword()
                 )
         );
+
         var user = repository.findByUsername(request.getUsername()).orElseThrow();
+
         var jwtToken = jwtService.generateToken(user);
+
         return AuthenticationResponse.builder()
+                .user(MyUserMapper.toDTO(user))
                 .token(jwtToken)
                 .build();
     }

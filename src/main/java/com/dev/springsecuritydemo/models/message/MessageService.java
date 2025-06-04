@@ -1,16 +1,20 @@
 package com.dev.springsecuritydemo.models.message;
 
 import com.dev.springsecuritydemo.models.chatRoom.ChatRoom;
+import com.dev.springsecuritydemo.models.chatRoom.ChatRoomDTO;
+import com.dev.springsecuritydemo.models.chatRoom.ChatRoomMapper;
 import com.dev.springsecuritydemo.models.chatRoom.ChatRoomService;
 import com.dev.springsecuritydemo.models.myUser.MyUser;
 import com.dev.springsecuritydemo.models.myUser.MyUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +23,10 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final MyUserRepository myUserRepository;
     private final ChatRoomService chatRoomService;
+    private final SimpMessagingTemplate messagingTemplate;
 
 
-    public void sendMessage(Integer receiverId, String text) {
+    public ChatRoomDTO sendMessage(Integer receiverId, String text) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 
@@ -29,7 +34,8 @@ public class MessageService {
 
         MyUser receiver = myUserRepository.findById(receiverId).orElseThrow(() -> new RuntimeException("Receiver not found"));
 
-        if (sender.getId().equals(receiver.getId())) throw new AccessDeniedException("You can't send message to yourself");
+        if (sender.getId().equals(receiver.getId()))
+            throw new AccessDeniedException("You can't send message to yourself");
 
         ChatRoom chatRoom = chatRoomService.createOrGetChatRoom(sender.getId(), receiver.getId());
 
@@ -41,7 +47,33 @@ public class MessageService {
                 .date(LocalDateTime.now())
                 .isRead(false)
                 .build();
-        messageRepository.save(message);
+        Message saved = messageRepository.save(message);
+
+        //WebSocket addition
+        MessageDTO dto = MessageMapper.toDTO(saved);
+        messagingTemplate.convertAndSend("/topic/rooms/" + chatRoom.getRoomId(), dto);
+
+        //My additions
+
+        return ChatRoomMapper.toDTO(chatRoom);
+    }
+
+    public void sendMessageToRoom(Integer roomId, Integer senderId, String text) {
+
+        ChatRoom chatRoom = chatRoomService.getChatRoomById(roomId);
+
+        Message message = Message.builder()
+                .senderId(senderId)
+                .text(text)
+                .chatRoom(chatRoom)
+                .date(LocalDateTime.now())
+                .isRead(false)
+                .build();
+        Message saved = messageRepository.save(message);
+
+        //WebSocket addition
+        MessageDTO dto = MessageMapper.toDTO(saved);
+        messagingTemplate.convertAndSend("/topic/rooms/" + chatRoom.getRoomId(), dto);
     }
 
     public void updateMessage(Long messageId, String newText) {
@@ -73,17 +105,27 @@ public class MessageService {
         messageRepository.delete(message);
     }
 
-    public void readMessage(Long messageId){
+    public void readMessage(Long messageId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 
         MyUser receiver = myUserRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-
+        Integer receiverId = receiver.getId();
         Message message = messageRepository.findById(messageId).orElseThrow();
-        if (!message.getReceiverId().equals(receiver.getId())) {
-            throw new AccessDeniedException("You can't read this message");
+        Integer senderId = message.getSenderId();
+        if (senderId.equals(receiverId)) {
+            return;
         }
         message.setIsRead(true);
         messageRepository.save(message);
+    }
+
+    public void readMessagesInRoom(Integer roomId) {
+        ChatRoom chatRoom = chatRoomService.getChatRoomById(roomId);
+        List<Message> messages = chatRoom.getMessages();
+        for(Message message : messages){
+            if(!message.getIsRead())
+                readMessage(message.getMessageId());
+        }
     }
 }

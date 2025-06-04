@@ -23,6 +23,10 @@ public class ChatRoomService {
         return chatRoom != null;
     }
 
+    public ChatRoom getChatRoomById(Integer roomId) {
+        return chatRoomRepository.findById(roomId).orElseThrow(() -> new RuntimeException("Room not found"));
+    }
+
     public ChatRoom createOrGetChatRoom(Integer senderId, Integer receiverId) {
         if(hasTheyChatRoom(senderId,receiverId)){
             return chatRoomRepository.findChatRoomByUsers(senderId,receiverId);
