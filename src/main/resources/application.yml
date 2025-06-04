@@ -2,7 +2,7 @@ spring:
   application:
     name: springSecurityDemo
   config:
-    import: "classpath:env.properties"
+    import: "optional:classpath:env.properties"
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
