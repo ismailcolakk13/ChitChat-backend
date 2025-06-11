@@ -2,22 +2,29 @@ package com.dev.springsecuritydemo.models.chatRoom;
 
 import com.dev.springsecuritydemo.models.message.MessageDTO;
 import com.dev.springsecuritydemo.models.message.MessageMapper;
+import com.dev.springsecuritydemo.models.message.MessageRepository;
 import com.dev.springsecuritydemo.models.myUser.MyUserMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
+@RequiredArgsConstructor
 public class ChatRoomMapper {
-    public static ChatRoomDTO toDTO(ChatRoom chatRoom) {
-        List<MessageDTO> messages = MessageMapper.toDTOList(chatRoom.getMessages());
-        System.out.println(messages);
-        int lastIndex = messages.size() - 1;
-        System.out.println(lastIndex);
 
+    private final MessageRepository messageRepository;
+    private final MessageMapper messageMapper;
+
+
+    public ChatRoomDTO toDTO(ChatRoom chatRoom) {
         MessageDTO lastMessage = null;
-        if (!messages.isEmpty()) {
-            lastMessage = messages.get(lastIndex);
-            System.out.println(lastMessage);
+        if (chatRoom.getRoomId() != null) {
+            var message = messageRepository.findLastMessageByRoomId(chatRoom.getRoomId());
+            if (message != null) {
+                lastMessage = messageMapper.toDTO(message);
+            }
         }
 
         return new ChatRoomDTO(
@@ -27,16 +34,7 @@ public class ChatRoomMapper {
         );
     }
 
-
-    public static List<ChatRoomDTO> toDTOList(List<ChatRoom> chatRooms) {
-        return chatRooms.stream().map(ChatRoomMapper::toDTO).collect(Collectors.toList());
+    public List<ChatRoomDTO> toDTOList(List<ChatRoom> chatRooms) {
+        return chatRooms.stream().map(this::toDTO).collect(Collectors.toList());
     }
-
-//    public static ChatRoom toEntity(ChatRoomDTO dto) {
-//        return ChatRoom.builder()
-//                .roomId(dto.roomId())
-//                .users(dto.users())
-//                .messages(dto.messages())
-//                .build();
-//    }
 }

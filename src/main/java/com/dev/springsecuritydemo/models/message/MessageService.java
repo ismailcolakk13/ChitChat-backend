@@ -23,6 +23,8 @@ public class MessageService {
     private final MyUserRepository myUserRepository;
     private final ChatRoomService chatRoomService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MessageMapper messageMapper;
+    private final ChatRoomMapper chatRoomMapper;
 
 
     public ChatRoomDTO sendMessage(Integer receiverId, String text) {
@@ -49,12 +51,12 @@ public class MessageService {
         Message saved = messageRepository.save(message);
 
         //WebSocket addition
-        MessageDTO dto = MessageMapper.toDTO(saved);
+        MessageDTO dto = messageMapper.toDTO(saved);
         messagingTemplate.convertAndSend("/topic/rooms/" + chatRoom.getRoomId(), dto);
 
         //My additions
 
-        return ChatRoomMapper.toDTO(chatRoom);
+        return chatRoomMapper.toDTO(chatRoom);
     }
 
     public void sendMessageToRoom(Integer roomId, Integer senderId, String text) {
@@ -71,7 +73,7 @@ public class MessageService {
         Message saved = messageRepository.save(message);
 
         //WebSocket addition
-        MessageDTO dto = MessageMapper.toDTO(saved);
+        MessageDTO dto = messageMapper.toDTO(saved);
         messagingTemplate.convertAndSend("/topic/rooms/" + chatRoom.getRoomId(), dto);
     }
 

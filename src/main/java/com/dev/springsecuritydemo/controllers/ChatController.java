@@ -22,6 +22,8 @@ public class ChatController {
 
     private final ChatRoomService chatRoomService;
     private final MessageService messageService;
+    private final MessageMapper messageMapper;
+    private final ChatRoomMapper chatRoomMapper;
 
     //MessageCONTROLLER
     @PostMapping("/send")
@@ -33,13 +35,13 @@ public class ChatController {
     @GetMapping("/rooms")
     public ResponseEntity<List<ChatRoomDTO>> getUsersChatRooms() {
         List<ChatRoom> rooms = chatRoomService.getUsersChatRooms();
-        return ResponseEntity.ok(ChatRoomMapper.toDTOList(rooms));
+        return ResponseEntity.ok(chatRoomMapper.toDTOList(rooms));
     }
 
     @GetMapping("/room/{roomId}")
     public ResponseEntity<List<MessageDTO>> getRoomMessages(@PathVariable Integer roomId) throws AccessDeniedException {
         List<Message> messages = chatRoomService.getMessagesByChatRoom(roomId);
-        List<MessageDTO> messagesDTO= MessageMapper.toDTOList(messages);
+        List<MessageDTO> messagesDTO= messageMapper.toDTOList(messages);
         return ResponseEntity.ok(messagesDTO);
     }
 
